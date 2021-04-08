@@ -109,7 +109,7 @@ class FilesMixin:
                   'force_download': True, 'json_error': True, '_dc': str(time() * 1000)[:13]}
         return self.session.http_get(endpoint, params=params, bio=True)
 
-    def download_synology_office_file(self, file_path: str) -> dict:
+    def download_synology_office_file(self, file_path: str) -> BinaryIO:
         """
         download synology office file as excel or word
         :param file_path: file/folder or file/folder id "552146100935505098"
@@ -143,6 +143,40 @@ class FilesMixin:
         api_name = 'SYNO.SynologyDrive.Files'
         endpoint = 'entry.cgi'
         data = {'api': api_name, 'method': 'update', 'version': 2, 'path': path_params, 'name': new_name}
+        urlencoded_data = form_urlencoded(data)
+        return self.session.http_post(endpoint, data=urlencoded_data)
+
+    def move_path(self, ready_for_move_paths: str, dest_folder: str) -> dict:
+        """
+        # TODO ready_for_move_paths can be list，str.
+        move file or folder to another folder
+        :param ready_for_move_paths: file/folder name or file/folder id "552146100935505098"
+        :param dest_folder: file/folder name or file/folder id "552146100935505098"
+        :return:
+        """
+        if dest_folder.isdigit():
+            dest_path = f"id:{dest_folder}"
+        else:
+            # add start position /
+            dest_path = f"/{dest_folder}" if not dest_folder.startswith('/') else dest_folder
+
+        if ready_for_move_paths.isdigit():
+            ready_for_move_paths = [f"id:{ready_for_move_paths}"]
+        else:
+            ready_for_move_paths = f"/{ready_for_move_paths}" if not ready_for_move_paths.startswith(
+                '/') else ready_for_move_paths
+            ret = self.get_file_or_folder_info(ready_for_move_paths)
+            ready_for_move_paths = [f"id:{ret['data']['file_id']}"]
+
+        # ret = self.get_file_or_folder_info(dest_path)
+        api_name = 'SYNO.SynologyDrive.Files'
+        endpoint = 'entry.cgi'
+        data = {'api': api_name,
+                'method': 'move',
+                'version': 2,
+                'files': ready_for_move_paths,
+                'to_parent_folder': dest_path,
+                'conflict_action': 'autorename'}
         urlencoded_data = form_urlencoded(data)
         return self.session.http_post(endpoint, data=urlencoded_data)
 

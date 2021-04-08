@@ -4,11 +4,6 @@ version = "1.0.0"
 description = ""
 authors = ["zbjdonald <zbjdonald@qq.com>"]
 
-[[tool.poetry.source]]
-name = "tsinghua"
-url = "https://pypi.tuna.tsinghua.edu.cn/simple/"
-default = true
-
 [tool.poetry.dependencies]
 python = "^3.7"
 requests = "^2.22.0"
