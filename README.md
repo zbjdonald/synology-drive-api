@@ -1,4 +1,11 @@
-Inspired by  [synology-api](https://github.com/N4S4/synology-api). This repo is aimed at providing **Synology drive** api wrapper and related helper functions. It helps you manage your files/folders/labels in synology drive.  By means of Synology Office, you can edit spreadsheet on Drive and use this api wrapper read spreadsheet. It supports Python 3.7+.
+# Synology Drive API
+[![Downloads](https://static.pepy.tech/personalized-badge/synology-drive-api?period=total&units=international_system&left_color=grey&right_color=red&left_text=Downloads)](https://pepy.tech/project/synology-drive-api)
+![Python](https://img.shields.io/badge/python-v3.7+-blue.svg)
+[![License](https://img.shields.io/badge/license-MIT-gree.svg)](https://opensource.org/licenses/MIT)
+![Contributions welcome](https://img.shields.io/badge/contributions-welcome-orange.svg)
+
+`synology-drive-api` is inspired by  [synology-api](https://github.com/N4S4/synology-api). 
+This repo is aimed at providing **Synology drive** api wrapper and related helper functions. It helps you manage your files/folders/labels in synology drive.  By means of Synology Office, you can edit spreadsheet on Drive and use this api wrapper read spreadsheet. It supports Python 3.7+.
 
 ## Installation
 ```bash
