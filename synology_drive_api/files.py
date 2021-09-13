@@ -28,7 +28,39 @@ class FilesMixin:
             return {}
 
         return {folder_info['name']: folder_info['file_id'] for folder_info in resp['data']['items']}
+    def share_file(self, path: str):
+        """
+        :param path: id:23333333333  or "'team-folders/folder2/'"
+        """
+        if path.isdigit():
+            path = f"id:{path}"
+        api_name = 'SYNO.SynologyDrive.AdvanceSharing'
+        endpoint = 'entry.cgi'
+        params = {'api': api_name, 'version': 1, 'method': 'create', "path": path, "role": "editor"
+                  }
+        re = self.session.http_put(endpoint, params=params)
 
+        params2 = {'api': "SYNO.SynologyDrive.AdvanceSharing", 'sharing_link': re['data']['sharing_link'], "role": "editor",
+                   'method': 'update', 'version': 1, 'due_date': 0, 'path': path}
+        # print(params)
+        self.session.http_put(endpoint, params=params2)
+        return re
+
+    def copy(self, source: str, dist: str) -> dict:
+        """
+        :source : id:23333333333  or "'team-folders/folder2/'"
+        :dist: "'team-folders/folder2/temp.odoc'"
+        """
+        endpoint = 'entry.cgi'
+        distpath, distname = os.path.split(dist)
+        api_name = "SYNO.Office.Node"
+        params = {'api': api_name, 'version': 2, 'method': 'copy',
+                  'to_parent_folder': distpath, 'dry_run': 'true', 'name': distname, 'title': distname[:distname.index('.')],
+                  'files': f'["{source}"]'}
+        # print(params)
+        return self.session.http_put(endpoint, params=params)
+
+     
     def list_folder(self, dir_path: str) -> dict:
         """
         :param dir_path: '/team-folders/folder_name/folder_name1' or '430167496067125111'
