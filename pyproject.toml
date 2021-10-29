@@ -1,8 +1,14 @@
 [tool.poetry]
 name = "synology_drive_api"
 version = "1.0.4"
-description = ""
+description = "synology drive api python wrapper"
 authors = ["zbjdonald <zbjdonald@qq.com>"]
+license = "MIT"
+readme = "README.md"
+homepage = "https://github.com/zbjdonald/synology-drive-api"
+repository = "https://github.com/zbjdonald/synology-drive-api"
+keywords = ["synology", "synology-drive"]
+
 
 [tool.poetry.dependencies]
 python = "^3.7"
