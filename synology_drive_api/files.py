@@ -1,6 +1,9 @@
-from time import time
-from typing import Optional, BinaryIO
+import io
+from pathlib import Path
+from time import time, sleep
+from typing import Optional, Union, BinaryIO
 
+from synology_drive_api.base import SynologyOfficeFileConvertFailed
 from synology_drive_api.utils import concat_drive_path
 from synology_drive_api.utils import form_urlencoded
 
@@ -77,7 +80,7 @@ class FilesMixin:
         urlencoded_data = form_urlencoded(data)
         return self.session.http_post(endpoint, data=urlencoded_data)
 
-    def upload_file(self, file: BinaryIO, dest_folder_path: Optional[str] = None) -> dict:
+    def upload_file(self, file: Union[io.BytesIO, BinaryIO], dest_folder_path: Optional[str] = None) -> dict:
         """
         upload file to drive
         :param file: binary_file
@@ -91,9 +94,10 @@ class FilesMixin:
         params = {'api': api_name, 'method': 'upload', 'version': 2, 'path': display_path,
                   'type': 'file', 'conflict_action': 'version'}
         files = {'file': file}
-        return self.session.http_post(endpoint, params=params, files=files)
+        upload_ret = self.session.http_post(endpoint, params=params, files=files)
+        return upload_ret
 
-    def download_file(self, file_path: str) -> dict:
+    def download_file(self, file_path: str) -> io.BytesIO:
         """
         download file from drive
         :param file_path:
@@ -101,22 +105,83 @@ class FilesMixin:
         """
         ret = self.get_file_or_folder_info(file_path)
         file_name = ret['data']['name']
+        if Path(file_name).suffix in ['.osheet', 'odoc']:
+            bio_ret_with_name = self.download_synology_office_file(file_path)
+        else:
+            file_id = ret['data']['file_id']
+            api_name = 'SYNO.SynologyDrive.Files'
+            endpoint = f'entry.cgi/{file_name}'
+            # \42: "
+            params = {'api': api_name, 'method': 'download', 'version': 2, 'files': f"[\42id:{file_id}\42]",
+                      'force_download': True, 'json_error': True, '_dc': str(time() * 1000)[:13]}
+            bio_ret = self.session.http_get(endpoint, params=params, bio=True)
+            bio_ret_with_name = io.BytesIO(bio_ret)
+            bio_ret_with_name.name = file_name
+        return bio_ret_with_name
+
+    def convert_to_online_office(self, file_path: str, delete_original_file=True):
+        """
+        convert file to online synology office file
+        :param file_path:
+        :param delete_original_file: indicator delete original file or not
+        :return:
+        """
+        if not file_path.isdigit() and '.' not in file_path:
+            raise Exception('file_path should be id or path with file extension, extensions are xlsx, xls, docx etc.')
+        ret = self.get_file_or_folder_info(file_path)
+        file_name = ret['data']['name']
+        file_extension = Path(file_name).suffix
+        if file_extension not in ['.xlsx', '.xls', '.docx']:
+            raise SynologyOfficeFileConvertFailed('file_path extension error.')
         file_id = ret['data']['file_id']
         api_name = 'SYNO.SynologyDrive.Files'
-        endpoint = f'entry.cgi/{file_name}'
-        # \42: "
-        params = {'api': api_name, 'method': 'download', 'version': 2, 'files': f"[\42id:{file_id}\42]",
-                  'force_download': True, 'json_error': True, '_dc': str(time() * 1000)[:13]}
-        return self.session.http_get(endpoint, params=params, bio=True)
+        endpoint = 'entry.cgi'
+        data = {'api': api_name, 'method': 'convert_office', 'version': 2, 'conflict_action': 'autorename',
+                'files': f"[\42id:{file_id}\42]"}
+        urlencoded_data = form_urlencoded(data)
+        ret = self.session.http_post(endpoint, data=urlencoded_data)
+        # when finish converting, delete original file
+        if delete_original_file:
+            # wait for conversion success
+            sleep(1)
+            task_status = self.get_task_status(ret['data']['async_task_id'])
+            if not task_status['data']['result'][0]['success']:
+                sleep(1)
+                second_counts = 0
+                while True:
+                    second_counts = second_counts + 1
+                    task_status = self.get_task_status(ret['data']['async_task_id'])
+                    if task_status['result'][0]['success'] or second_counts >= 15:
+                        break
+                if second_counts >= 15:
+                    raise SynologyOfficeFileConvertFailed('convert progress timeout(>15s)')
+            self.delete_path(file_id)
+        return ret
 
-    def download_synology_office_file(self, file_path: str) -> BinaryIO:
+    def upload_as_synology_office_file(self, file: Union[io.BytesIO, BinaryIO], dest_folder_path: Optional[str] = None):
+        """
+        upload file to drive, and converted to
+        :param file: binary_file
+        :param dest_folder_path: upload folder path
+        :return:
+        """
+        upload_ret = self.upload_file(file, dest_folder_path)
+        # if conversion is failed, delete uploaded file.
+        try:
+            convert_ret = self.convert_to_online_office(upload_ret['data']['file_id'])
+        except SynologyOfficeFileConvertFailed as e:
+            self.delete_path(upload_ret['data']['file_id'])
+            raise e
+        return convert_ret
+
+    def download_synology_office_file(self, file_path: str) -> io.BytesIO:
         """
         download synology office file as excel or word
         :param file_path: file/folder or file/folder id "552146100935505098"
         :return:
         """
         if not file_path.isdigit() and '.' not in file_path:
-            raise Exception('file_path should be id or path with file extension')
+            raise Exception('file_path should be id or path with file extension, extensions are osheet or odoc')
 
         ret = self.get_file_or_folder_info(file_path)
         file_name = ret['data']['name']
@@ -126,7 +191,10 @@ class FilesMixin:
         api_name = 'SYNO.Office.Export'
         endpoint = f"entry.cgi/{export_end_point}"
         params = {'api': api_name, 'method': 'download', 'version': 1, 'path': f"id:{file_id}"}
-        return self.session.http_get(endpoint, params=params, bio=True)
+        bio_ret = self.session.http_get(endpoint, params=params, bio=True)
+        bio_ret_with_name = io.BytesIO(bio_ret)
+        bio_ret_with_name.name = export_end_point
+        return bio_ret_with_name
 
     def rename_path(self, new_name: str, dest_path: str) -> dict:
         """

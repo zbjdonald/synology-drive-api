@@ -11,6 +11,15 @@ import urllib3
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 
+class BlockAll(cookiejar.CookiePolicy):
+    """
+    drop cookies from session object
+    """
+    return_ok = set_ok = domain_return_ok = path_return_ok = lambda self, *args, **kwargs: False
+    netscape = True
+    rfc2965 = hide_cookie2 = False
+
+
 class SynologyException(requests.RequestException):
 
     def __init__(self, code=-1, message=None, *args, **kwargs):
@@ -24,13 +33,8 @@ class SynologyException(requests.RequestException):
     __repr__ = __str__
 
 
-class BlockAll(cookiejar.CookiePolicy):
-    """
-    drop cookies from session object
-    """
-    return_ok = set_ok = domain_return_ok = path_return_ok = lambda self, *args, **kwargs: False
-    netscape = True
-    rfc2965 = hide_cookie2 = False
+class SynologyOfficeFileConvertFailed(Exception):
+    pass
 
 
 def concat_nas_address(ip_address: Optional[str] = None,
@@ -132,6 +136,8 @@ class SynologySession:
     _sid: Optional[str] = None
     req_session: requests.Session = requests.Session()
     _session_expire: bool = True
+    # dsm version, used for login api version
+    dsm_version: str = '6'
 
     def __init__(self,
                  username: str,
@@ -139,10 +145,14 @@ class SynologySession:
                  ip_address: Optional[str] = None,
                  port: Optional[int] = None,
                  nas_domain: Optional[str] = None,
-                 https: Optional[bool] = True) -> None:
+                 https: Optional[bool] = True,
+                 dsm_version: str = '6') -> None:
+        assert dsm_version in ('6', '7'), "dsm_version should be either '6' or '7'."
+
         nas_address = concat_nas_address(ip_address, port, nas_domain, https)
         self._username = username
         self._password = password
+        self.dsm_version = dsm_version
         self._base_url = f"{nas_address}/webapi/"
         self.req_session.cookies.set_policy(BlockAll())
 
@@ -203,7 +213,8 @@ class SynologySession:
 
     def login(self, application: str):
         endpoint = 'auth.cgi'
-        params = {'api': 'SYNO.API.Auth', 'version': '2', 'method': 'login', 'account': self._username,
+        login_api_version = '2' if self.dsm_version == '6' else '3'
+        params = {'api': 'SYNO.API.Auth', 'version': login_api_version, 'method': 'login', 'account': self._username,
                   'passwd': self._password, 'session': application, 'format': 'cookie'}
         if not self._session_expire:
             if self._sid is not None:
@@ -220,7 +231,8 @@ class SynologySession:
 
     def logout(self, application: str):
         endpoint = 'auth.cgi'
-        params = {'api': 'SYNO.API.Auth', 'version': '2', 'method': 'logout', 'session': application}
+        logout_api_version = '2' if self.dsm_version == '6' else '3'
+        params = {'api': 'SYNO.API.Auth', 'version': logout_api_version, 'method': 'logout', 'session': application}
         resp = self.http_get(
             endpoint,
             params=params

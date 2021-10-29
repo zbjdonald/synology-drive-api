@@ -41,7 +41,14 @@ with SynologyDrive(NAS_USER, NAS_PASS, drive_path_demo) as synd:
 with SynologyDrive(NAS_USER, NAS_PASS, drive_path_demo, enable_label_cache=False) as synd:
     pass
 ```
+If you use dsm 7, default dsm_version is '6'.  
+```python
+from synology_drive_api.drive import SynologyDrive
 
+# default http port is 5000, https is 5001. 
+with SynologyDrive(NAS_USER, NAS_PASS, NAS_IP, dsm_version='7') as synd:
+   pass
+```
 ## Manage labels
 
 Synology drive thinks labels need to belong to single user. **If you want share labels between users, you should have access to these user accounts.** Another solution is creating a *tool user*.
@@ -156,10 +163,16 @@ ret_upload = nas_client.upload_file(file, dest_folder_path=dest_folder_path)
 ret_upload = nas_client.upload_file(file)
 ```
 
-### Download file
+You can upload xlsx or docx as synology office file.
+``` python
+with open('test.xlsx', 'rb') as file:
+    nas_client.upload_as_synology_office_file(file, '/mydrive/')
+```
 
+### Download file
+New: Support osheet and odoc extensions.
 ```python
-file_name = 'test.pdf'
+file_name = 'test.osheet'
 bio = synd.download_file(f'/mydrive/{file_name}')
 with open(file_name, 'wb') as f:
     f.write(bio)
