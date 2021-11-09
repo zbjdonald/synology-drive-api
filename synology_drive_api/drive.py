@@ -19,8 +19,9 @@ class SynologyDrive(LabelsMixin, FilesMixin, TasksMixin):
                  port: Union[None, str, int] = None,
                  nas_domain: Optional[str] = None,
                  https: bool = True,
-                 enable_label_cache: bool = True) -> None:
-        self.session = SynologySession(username, password, ip_address, port, nas_domain, https)
+                 enable_label_cache: bool = True,
+                 dsm_version: str = '6') -> None:
+        self.session = SynologySession(username, password, ip_address, port, nas_domain, https, dsm_version)
         self.enable_label_cache = enable_label_cache
 
     def __enter__(self):
