@@ -139,6 +139,7 @@ class SynologySession:
     _session_expire: bool = True
     # dsm version, used for login api version
     dsm_version: str = '6'
+    max_retry: int = 10
 
     def __init__(self,
                  username: str,
@@ -148,7 +149,7 @@ class SynologySession:
                  nas_domain: Optional[str] = None,
                  https: Optional[bool] = True,
                  dsm_version: str = '6',
-                 max_retry: int = 3) -> None:
+                 max_retry: int = 10) -> None:
         assert dsm_version in ('6', '7'), "dsm_version should be either '6' or '7'."
 
         nas_address = concat_nas_address(ip_address, port, nas_domain, https)
