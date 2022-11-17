@@ -1,11 +1,12 @@
 import functools
 from http import cookiejar
-from typing import Optional, Union
+from time import sleep
 from urllib.parse import urlparse
 
 import requests
 import simplejson as json
 import urllib3
+from typing import Optional, Union
 
 # Used for verify=False in requests
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
@@ -146,7 +147,8 @@ class SynologySession:
                  port: Optional[int] = None,
                  nas_domain: Optional[str] = None,
                  https: Optional[bool] = True,
-                 dsm_version: str = '6') -> None:
+                 dsm_version: str = '6',
+                 max_retry: int = 3) -> None:
         assert dsm_version in ('6', '7'), "dsm_version should be either '6' or '7'."
 
         nas_address = concat_nas_address(ip_address, port, nas_domain, https)
@@ -155,6 +157,7 @@ class SynologySession:
         self.dsm_version = dsm_version
         self._base_url = f"{nas_address}/webapi/"
         self.req_session.cookies.set_policy(BlockAll())
+        self.max_retries = max_retry
 
     def _request(self, method: str, endpoint: str, **kwargs):
         """
@@ -188,12 +191,35 @@ class SynologySession:
             # return true indicate adding verify=False to requests.
             kwargs['verify'] = False
         bio_flag = kwargs.pop('bio') if 'bio' in kwargs else None
-        res = self.req_session.request(
-            method=method,
-            url=url,
-            **kwargs
-        )
-        raise_synology_exception(res, bio_exist=bio_flag)
+        if not self.max_retries:
+            res = self.req_session.request(
+                method=method,
+                url=url,
+                **kwargs
+            )
+            raise_synology_exception(res, bio_exist=bio_flag)
+        else:
+            for retry in range(self.max_retries):
+                try:
+                    res = self.req_session.request(
+                        method=method,
+                        url=url,
+                        **kwargs
+                    )
+                    raise_synology_exception(res, bio_exist=bio_flag)
+                    break
+                except SynologyException as e:
+                    # retry
+                    # 105: permission denied by anonymous
+                    # 1003: update file information failed
+                    if e.code in (105, 1003):
+                        sleep(1)
+                        if retry == self.max_retries - 1:
+                            raise e
+                        else:
+                            continue
+                    else:
+                        raise e
         if bio_flag:
             return res.content
         result = res.json() if res.text else {}
