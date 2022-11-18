@@ -212,8 +212,8 @@ class SynologySession:
                 except SynologyException as e:
                     # retry
                     # 105: permission denied by anonymous
-                    # 1003: update file information failed
-                    if e.code in (105, 1003):
+                    # 1003 1002: update file information failed
+                    if e.code in (105, 1003, 1002):
                         sleep(1)
                         if retry == self.max_retries - 1:
                             raise e
