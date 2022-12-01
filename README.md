@@ -23,26 +23,26 @@ from synology_drive_api.drive import SynologyDrive
 
 # default http port is 5000, https is 5001. 
 with SynologyDrive(NAS_USER, NAS_PASS, NAS_IP) as synd:
-    pass 
+    synd.list_folder('/mydrive')  # write your code here
 # Use specified port
 with SynologyDrive(NAS_USER, NAS_PASS, NAS_IP, NAS_PORT) as synd:
-    pass
+    synd.get_file_or_folder_info(path_or_path_id)  # write your code here
 # use http instead of https. https: default is True.
 with SynologyDrive(NAS_USER, NAS_PASS, NAS_IP, https=False) as synd:
-    pass
+    synd.create_folder('test', 'team-folder/folder2/')  # write your code here
 # Enable 2fa.
 with SynologyDrive(NAS_USER, NAS_PASS, otp_code='XXXXXX') as synd:
-    pass
+    synd.list_folder('/mydrive')  # write your code here
 # use domain name or name + path access drive
 # Enabled in Application Portal | Application | Drive | General | Enable customized alias
 drive_path_demo = 'your_nas_domain/drive'
 # Enabled in Application Portal | Application | Drive | General | Enable customized domain
 drive_path_demo2 = 'your_drive_domain'
 with SynologyDrive(NAS_USER, NAS_PASS, drive_path_demo) as synd:
-    pass
+    synd.upload_file(file, dest_folder_path=dest_folder_path)  # write your code here
 # disable label cache
 with SynologyDrive(NAS_USER, NAS_PASS, drive_path_demo, enable_label_cache=False) as synd:
-    pass
+    synd.list_folder('/mydrive')  # write your code here
 ```
 If you use dsm 7, default dsm_version is '6'.  
 ```python
@@ -50,7 +50,7 @@ from synology_drive_api.drive import SynologyDrive
 
 # default http port is 5000, https is 5001. 
 with SynologyDrive(NAS_USER, NAS_PASS, NAS_IP, dsm_version='7') as synd:
-   pass
+   synd.download_file('/mydrive/test.osheet')  # write your code here
 ```
 ## Manage labels
 
@@ -161,9 +161,9 @@ You don't need create folder subfolder before uploading your file.
 file = io.BytesIO(mail_attachment['file'])
 # add a file name to file
 file.name = strip_file_name(mail_attachment['name'])
-ret_upload = nas_client.upload_file(file, dest_folder_path=dest_folder_path)
+ret_upload = synd.upload_file(file, dest_folder_path=dest_folder_path)
 # upload to your private folder
-ret_upload = nas_client.upload_file(file)
+ret_upload = synd.upload_file(file)
 ```
 
 You can upload xlsx or docx as synology office file.
@@ -187,7 +187,8 @@ with open(file_name, 'wb') as f:
 import pandas as pd
 
 # download osheet as xlsx and read into pandas dataframe.
-bio = synd.download_synology_office_file('/mydrive/test.osheet')
+bio = synd.download_synology_office_file('/mydrive/test.osheet')  # or
+bio = synd.download_file('/mydrive/test.osheet')
 pd.read_excel(bio, sheet_name=None)
 
 # dowloand odoc as docx
