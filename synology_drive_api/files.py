@@ -109,7 +109,7 @@ class FilesMixin:
 
         api_name = 'SYNO.SynologyDrive.Files'
         endpoint = 'entry.cgi'
-        data = {'api': api_name, 'method': 'update', 'version': 2, 'path': path_params}
+        data = {'api': api_name, 'method': 'get', 'version': 3, 'path': path_params}
         urlencoded_data = form_urlencoded(data)
         return self.session.http_post(endpoint, data=urlencoded_data)
 
