@@ -131,6 +131,7 @@ class SynologySession:
     """
     _username: str
     _password: str
+    _otp_code: str
     # api base url
     _base_url: str
     # sid token
@@ -139,7 +140,7 @@ class SynologySession:
     _session_expire: bool = True
     # dsm version, used for login api version
     dsm_version: str = '6'
-    max_retry: int = 3
+    max_retry: int = 2
 
     def __init__(self,
                  username: str,
@@ -149,12 +150,14 @@ class SynologySession:
                  nas_domain: Optional[str] = None,
                  https: Optional[bool] = True,
                  dsm_version: str = '6',
-                 max_retry: int = 3) -> None:
+                 max_retry: int = 2,
+                 otp_code: Optional[str] = None) -> None:
         assert dsm_version in ('6', '7'), "dsm_version should be either '6' or '7'."
 
         nas_address = concat_nas_address(ip_address, port, nas_domain, https)
         self._username = username
         self._password = password
+        self._otp_code = otp_code
         self.dsm_version = dsm_version
         self._base_url = f"{nas_address}/webapi/"
         self.req_session.cookies.set_policy(BlockAll())
@@ -243,6 +246,9 @@ class SynologySession:
         login_api_version = '2' if self.dsm_version == '6' else '3'
         params = {'api': 'SYNO.API.Auth', 'version': login_api_version, 'method': 'login', 'account': self._username,
                   'passwd': self._password, 'session': application, 'format': 'cookie'}
+        if self._otp_code is not None:
+            params['otp_code'] = self._otp_code
+
         if not self._session_expire:
             if self._sid is not None:
                 self._session_expire = False

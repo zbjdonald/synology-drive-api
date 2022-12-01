@@ -30,6 +30,9 @@ with SynologyDrive(NAS_USER, NAS_PASS, NAS_IP, NAS_PORT) as synd:
 # use http instead of https. https: default is True.
 with SynologyDrive(NAS_USER, NAS_PASS, NAS_IP, https=False) as synd:
     pass
+# Enable 2fa.
+with SynologyDrive(NAS_USER, NAS_PASS, otp_code='XXXXXX') as synd:
+    pass
 # use domain name or name + path access drive
 # Enabled in Application Portal | Application | Drive | General | Enable customized alias
 drive_path_demo = 'your_nas_domain/drive'
