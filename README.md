@@ -214,3 +214,11 @@ synd.rename_path('new.pdf', '/mydrive/H3_AP201812091265503218_1.pdf')
 # Rename folder '/mydrive/test_folder' to '/mydrive/abc_folder'
 synd.rename_path('abc_folder', '/mydrive/test_folder')
 ```
+
+### Share file or folder
+
+Get unique file url.
+
+```python
+synd.create_link('team-folders/operation/H3_AP201812091265503218_1.pdf')
+```

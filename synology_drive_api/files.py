@@ -50,6 +50,23 @@ class FilesMixin:
         self.session.http_put(endpoint, params=params2)
         return re
 
+    def create_link(self, file_or_folder_path: str):
+        """
+        create file link
+        :param file_or_folder_path: id:23333333333  or "'team-folders/folder2/'"
+        :return:
+        """
+        api_name = 'SYNO.SynologyDrive.Sharing'
+        endpoint = 'entry.cgi'
+        if file_or_folder_path.isdigit():
+            path_params = f"id:{file_or_folder_path}"
+        else:
+            # add start position /
+            path_params = f"/{file_or_folder_path}" if not file_or_folder_path.startswith('/') else file_or_folder_path
+        data = {'api': api_name, 'method': 'create_link', 'version': 1, 'path': path_params}
+        urlencoded_data = form_urlencoded(data)
+        return self.session.http_post(endpoint, data=urlencoded_data)
+
     def copy(self, source: str, dist: str) -> dict:
         """
         copy file or dir
