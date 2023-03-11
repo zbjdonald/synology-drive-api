@@ -164,15 +164,37 @@ file.name = strip_file_name(mail_attachment['name'])
 ret_upload = synd.upload_file(file, dest_folder_path=dest_folder_path)
 # upload to your private folder
 ret_upload = synd.upload_file(file)
+# custom conflict_action: 'version' to rewrite, 'autorename' to rename. Default: 'version'
+ret_upload = synd.upload_file(file, dest_folder_path=dest_folder_path, conflict_action='version')
 ```
 
 You can upload xlsx or docx as synology office file.
+
+**[\*\*Deprecation hint\*\*]** This API will be deprecated in the future. It's recommended to call `upload_file` and `convert_to_online_office` by yourself.
+
 ``` python
+# custom upload_conflict_action for upload: 'version' to rewrite, 'autorename' to rename. Default: 'version'
+# custom convert_conflict_action for convert: 'version' to rewrite, 'autorename' to rename. Default: 'autorename'
 with open('test.xlsx', 'rb') as file:
     nas_client.upload_as_synology_office_file(file, '/mydrive/')
 ```
 
+### Convert to online office
+
+Transform docx/xlsx/pptx to Synology online office file.
+
+```python
+# If delete_original_file is True, origin docx/xlsx/pptx will be deleted after transformed. Default: True
+# custom conflict_action: 'version' to rewrite, 'autorename' to rename. Default: 'autorename'
+ret_convert = synd.convert_to_online_office(dest_file_path,
+                                            delete_original_file=True,
+                                            conflict_action='autorename')
+```
+
+
+
 ### Download file
+
 New: Support osheet and odoc extensions.
 ```python
 file_name = 'test.osheet'
