@@ -1,4 +1,6 @@
 import urllib.parse
+import warnings
+import functools
 
 import simplejson as json
 from selenium import webdriver
@@ -56,3 +58,18 @@ def concat_drive_path(dest_path: str, end_point: str, default_folder: str = 'myd
         dest_path = f"{dest_path}/" if not dest_path.endswith('/') else dest_path
         display_path = f"{dest_path}{end_point}"
     return display_path
+
+
+def deprecate(alt_func_names):
+    def outer_wrapper(f):
+        @functools.wraps(f)
+        def inner(*args, **kwargs):
+            hint = ', '.join(alt_func_names)
+            warnings.warn(
+                f'[Deprecation] {f.__name__} will be deprecated in the future.'
+                f'Substitutions are: {hint}',
+                FutureWarning
+            )
+            return f(*args, **kwargs)
+        return inner
+    return outer_wrapper

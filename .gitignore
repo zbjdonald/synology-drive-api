@@ -185,6 +185,9 @@ npm-debug.log
 # Restrict `.idea/` folder at all:
 .idea/
 
+# Vim
+*.swp
+
 # CMake
 cmake-build-debug/
 

@@ -7,6 +7,7 @@ from typing import Optional, Union, BinaryIO
 from synology_drive_api.base import SynologyOfficeFileConvertFailed
 from synology_drive_api.utils import concat_drive_path
 from synology_drive_api.utils import form_urlencoded
+from synology_drive_api.utils import deprecate
 
 
 class FilesMixin:
@@ -130,11 +131,14 @@ class FilesMixin:
         urlencoded_data = form_urlencoded(data)
         return self.session.http_post(endpoint, data=urlencoded_data)
 
-    def upload_file(self, file: Union[io.BytesIO, BinaryIO], dest_folder_path: Optional[str] = None) -> dict:
+    def upload_file(self, file: Union[io.BytesIO, BinaryIO], dest_folder_path: Optional[str] = None,
+                    conflict_action='version')-> dict:
         """
         upload file to drive
         :param file: binary_file
         :param dest_folder_path: upload folder path
+        :param conflict_action: 'autorename' to rename the new, 'version' to rewrite the file.
+                                Default is 'version', same as UI default behaviour.
         :return:
         """
         file_name = file.name
@@ -142,7 +146,7 @@ class FilesMixin:
         api_name = 'SYNO.SynologyDrive.Files'
         endpoint = 'entry.cgi'
         params = {'api': api_name, 'method': 'upload', 'version': 2, 'path': display_path,
-                  'type': 'file', 'conflict_action': 'version'}
+                  'type': 'file', 'conflict_action': conflict_action}
         files = {'file': file}
         upload_ret = self.session.http_post(endpoint, params=params, files=files)
         return upload_ret
@@ -169,11 +173,14 @@ class FilesMixin:
             bio_ret_with_name.name = file_name
         return bio_ret_with_name
 
-    def convert_to_online_office(self, file_path: str, delete_original_file=True):
+    def convert_to_online_office(self, file_path: str, delete_original_file=True, conflict_action='autorename'):
         """
         convert file to online synology office file
+
         :param file_path:
         :param delete_original_file: indicator delete original file or not
+        :param conflict_action: 'autorename' to rename the new, 'version' to rewrite the file
+                                Default is 'autorename', same as UI default behaviour.
         :return:
         """
         if not file_path.isdigit() and '.' not in file_path:
@@ -186,7 +193,7 @@ class FilesMixin:
         file_id = ret['data']['file_id']
         api_name = 'SYNO.SynologyDrive.Files'
         endpoint = 'entry.cgi'
-        data = {'api': api_name, 'method': 'convert_office', 'version': 2, 'conflict_action': 'autorename',
+        data = {'api': api_name, 'method': 'convert_office', 'version': 2, 'conflict_action': conflict_action,
                 'files': f"[\42id:{file_id}\42]"}
         urlencoded_data = form_urlencoded(data)
         ret = self.session.http_post(endpoint, data=urlencoded_data)
@@ -208,17 +215,26 @@ class FilesMixin:
             self.delete_path(file_id)
         return ret
 
-    def upload_as_synology_office_file(self, file: Union[io.BytesIO, BinaryIO], dest_folder_path: Optional[str] = None):
+    @deprecate(['upload_file', 'convert_to_online_office'])
+    def upload_as_synology_office_file(self, file: Union[io.BytesIO, BinaryIO], dest_folder_path: Optional[str] = None,
+                                       upload_conflict_action='version', convert_conflict_action='autorename'):
         """
-        upload file to drive, and converted to
+        upload file to drive, and converted to online office file
+
         :param file: binary_file
         :param dest_folder_path: upload folder path
+        :param upload_conflict_action: 'autorename' to rename the new, 'version' to rewrite the file.
+                                        Default is 'version', same as UI default behaviour.
+        :param convert_conflict_action: 'autorename' to rename the new, 'version' to rewrite the file.
+                                        Default is 'autorename', same as UI default behaviour.
         :return:
         """
-        upload_ret = self.upload_file(file, dest_folder_path)
+        upload_ret = self.upload_file(file, dest_folder_path,
+                                      conflict_action=upload_conflict_action)
         # if conversion is failed, delete uploaded file.
         try:
-            convert_ret = self.convert_to_online_office(upload_ret['data']['file_id'])
+            convert_ret = self.convert_to_online_office(upload_ret['data']['file_id'],
+                                                        conflict_action=convert_conflict_action)
         except SynologyOfficeFileConvertFailed as e:
             self.delete_path(upload_ret['data']['file_id'])
             raise e
