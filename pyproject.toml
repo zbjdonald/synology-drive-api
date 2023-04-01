@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "synology_drive_api"
-version = "1.0.13"
+version = "1.0.14"
 description = "synology drive api python wrapper"
 authors = ["zbjdonald <zbjdonald@qq.com>"]
 license = "MIT"
