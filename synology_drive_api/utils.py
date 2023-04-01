@@ -50,7 +50,7 @@ def concat_drive_path(dest_path: str, end_point: str, default_folder: str = 'myd
     if dest_path is None:
         display_path = f"/{default_folder}/{end_point}"
     elif dest_path.startswith('id'):
-        display_path = f"{dest_path}/folder_name"
+        display_path = f"{dest_path}/{end_point}"
     else:
         # add start position /
         dest_path = f"/{dest_path}" if not dest_path.startswith('/') else dest_path
