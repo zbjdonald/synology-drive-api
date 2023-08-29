@@ -141,6 +141,7 @@ class SynologySession:
     # dsm version, used for login api version
     dsm_version: str = '6'
     max_retry: int = 2
+    cert_verify: bool
 
     def __init__(self,
                  username: str,
@@ -151,7 +152,8 @@ class SynologySession:
                  https: Optional[bool] = True,
                  dsm_version: str = '6',
                  max_retry: int = 2,
-                 otp_code: Optional[str] = None) -> None:
+                 otp_code: Optional[str] = None,
+                 cert_verify: Optional[bool] = True) -> None:
         assert dsm_version in ('6', '7'), "dsm_version should be either '6' or '7'."
 
         nas_address = concat_nas_address(ip_address, port, nas_domain, https)
@@ -162,6 +164,7 @@ class SynologySession:
         self._base_url = f"{nas_address}/webapi/"
         self.req_session.cookies.set_policy(BlockAll())
         self.max_retries = max_retry
+        self.cert_verify = cert_verify
 
     def _request(self, method: str, endpoint: str, **kwargs):
         """
@@ -188,6 +191,7 @@ class SynologySession:
         elif isinstance(kwargs.get('data'), str):
             kwargs['data'] = kwargs['data'].encode('utf-8')
 
+        kwargs['verify'] = self.cert_verify
         parsed_url = urlparse(url)
         # Allow url pattern: https://192.168.1.58:133/webapi
         if parsed_url.scheme == 'https' and parsed_url.netloc.count('.') >= 3:
