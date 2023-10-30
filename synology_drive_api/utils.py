@@ -32,7 +32,7 @@ def form_urlencoded(data: dict) -> str:
     """
     data_list = []
     for key, value in data.items():
-        value_encode = urllib.parse.quote(json.dumps(value), safe='') if not isinstance(value, str) else value
+        value_encode = urllib.parse.quote(json.dumps(value) if not isinstance(value, str) else value, safe='')
         # [key, '=', value_encode]
         data_list.append(f"{key}={value_encode}")
     urlencoded_data = '&'.join(data_list)
