@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "synology_drive_api"
-version = "1.0.14"
+version = "1.0.15"
 description = "synology drive api python wrapper"
 authors = ["zbjdonald <zbjdonald@qq.com>"]
 license = "MIT"
@@ -14,7 +14,7 @@ keywords = ["synology", "synology-drive"]
 python = "^3.7"
 requests = "^2.22.0"
 simplejson = "^3.17.0"
-selenium = "^3.141.0"
+selenium = "*"
 optionaldict = "^0.1.1"
 
 [tool.poetry.dev-dependencies]
