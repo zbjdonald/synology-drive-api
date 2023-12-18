@@ -200,7 +200,7 @@ New: Support osheet and odoc extensions.
 file_name = 'test.osheet'
 bio = synd.download_file(f'/mydrive/{file_name}')
 with open(file_name, 'wb') as f:
-    f.write(bio)
+    f.write(bio.getvalue())
 ```
 
 ### Download Synology office file
@@ -216,7 +216,7 @@ pd.read_excel(bio, sheet_name=None)
 # dowloand odoc as docx
 bio = synd.download_synology_office_file('/mydrive/test.odoc')
 with open('test.docx', 'wb') as f:
-    f.write(bio)
+    f.write(bio.getvalue())
 ```
 
 ### Delete file or folder
