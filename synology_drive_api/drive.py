@@ -22,9 +22,10 @@ class SynologyDrive(LabelsMixin, FilesMixin, TasksMixin):
                  enable_label_cache: bool = True,
                  dsm_version: str = '6',
                  max_retry: int = 2,
-                 otp_code: Optional[str] = None) -> None:
+                 otp_code: Optional[str] = None,
+                 cert_verify: Optional[bool] = True) -> None:
         self.session = SynologySession(username, password, ip_address, port, nas_domain, https, dsm_version, max_retry,
-                                       otp_code)
+                                       otp_code, cert_verify)
         self.enable_label_cache = enable_label_cache
 
     def __enter__(self):
