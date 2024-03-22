@@ -141,7 +141,7 @@ class FilesMixin:
                                 Default is 'version', same as UI default behaviour.
         :return:
         """
-        file_name = file.name
+        file_name = os.basename(file.name)
         display_path = concat_drive_path(dest_folder_path, file_name)
         api_name = 'SYNO.SynologyDrive.Files'
         endpoint = 'entry.cgi'
